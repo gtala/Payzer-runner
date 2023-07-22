@@ -15,10 +15,17 @@ import {
   OperationType,
   RelayTransaction,
 } from '@safe-global/safe-core-sdk-types';
+import { getResource } from './utils/ipfsStorage';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
+
+  @Get('/test')
+  getHello2(): string {
+    getResource('users');
+    return 'test';
+  }
 
   @Get()
   getHello(): string {

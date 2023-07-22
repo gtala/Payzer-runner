@@ -27,11 +27,13 @@
     "@safe-global/protocol-kit": "^1.2.0",
     "@safe-global/relay-kit": "^1.2.0",
     "@safe-global/safe-core-sdk-types": "^2.2.0",
+    "axios": "^1.4.0",
     "dotenv": "^16.3.1",
     "ethers": "5.7.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0"
+    "rxjs": "^7.2.0",
+    "web3.storage": "^4.5.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
