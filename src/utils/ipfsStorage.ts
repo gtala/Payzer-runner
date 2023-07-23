@@ -17,15 +17,17 @@ const makeStorageClient = (): Web3Storage => {
 
 export const getResource = async (resource: string) => {
   const client = makeStorageClient();
+  const data = [];
 
   for await (const upload of client.list()) {
     const url = `https://ipfs.io/ipfs/${upload.cid}/${resource}.json`;
-
     try {
       const response = await axios.get(url, {});
-      console.log(response.data);
+      data.push(response.data);
     } catch (e) {}
   }
+
+  return data;
 };
 
 export const makeFileObjects = (obj: Object) => {

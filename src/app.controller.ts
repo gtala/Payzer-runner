@@ -22,8 +22,9 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get('/test')
-  getHello2(): string {
-    getResource('users');
+  async getHello2(): Promise<string> {
+    const data = await getResource('users');
+    console.log(data);
     return 'test';
   }
 
