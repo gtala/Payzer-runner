@@ -12,6 +12,7 @@ import Safe, {
   getSafeContract,
 } from '@safe-global/protocol-kit';
 import { GelatoRelayPack } from '@safe-global/relay-kit';
+import { DateTime, Duration } from 'luxon';
 
 @Injectable()
 export class TasksService {
@@ -19,9 +20,26 @@ export class TasksService {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
-    /*    const data = await getResource('users');
-        console.log(data);*/
-    this.sendTransaction('0x980003F1361083f7BB21aAa74E0B19fe98bB84A8', '0.005');
+    const currentTime = DateTime.local().toString();
+    const scheduleTime = DateTime.local(2023, 7, 23, 4, 3, 0);
+
+    console.log(
+      'running time 1',
+      currentTime,
+      scheduleTime.diffNow().toString(),
+    );
+    if (
+      scheduleTime.diffNow() > Duration.fromMillis(100) &&
+      scheduleTime.diffNow() < Duration.fromMillis(10000)
+    ) {
+      console.log('running time 2', currentTime);
+      this.sendTransaction(
+        '0x980003F1361083f7BB21aAa74E0B19fe98bB84A8',
+        '0.005',
+      );
+      console.log('running time 3', currentTime);
+    }
+
     this.logger.debug('Called every 20 seconds');
   }
 
@@ -36,17 +54,12 @@ export class TasksService {
 
     const safeAddress = '0xAe25Cd337553c84db2EdE5C689F793130bf524dB'; // Safe from which the transaction will be sent. Replace with your Safe address
     const chainId = 5;
-
-    // Any address can be used for destination. In this example, we use vitalik.eth
-    //const destinationAddress = '0x9096fF57d3B6Ab870F75de9800E90C4a44Ad5178';
     const withdrawAmount = ethers.utils
       .parseUnits(ethAmount, 'ether')
       .toString();
 
     // Get Gelato Relay API Key: https://relay.gelato.network/
     const GELATO_RELAY_API_KEY = process.env.GELATO_RELAY_API_KEY!;
-
-    // Usually a limit of 21000 is used but for smart contract interactions, you can increase to 100000 because of the more complex interactions.
     const gasLimit = '100000';
 
     // Create a transaction object
@@ -56,6 +69,7 @@ export class TasksService {
       value: withdrawAmount,
       operation: OperationType.Call,
     };
+
     const options: MetaTransactionOptions = {
       gasLimit,
       isSponsored: true,
