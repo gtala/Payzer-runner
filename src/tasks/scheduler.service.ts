@@ -22,26 +22,32 @@ export class TasksService {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
-    const currentTime = DateTime.local().toString();
-    const scheduleTime = DateTime.local(2023, 7, 23, 5, 51, 0);
+    const IPFS_Result = [
+      {
+        destinationAddress: '0xa3486e350263fa452c43e31aa85939E3CDa3d552',
+        amount: '0.008',
+        scheduleTime: DateTime.local(2023, 7, 23, 6, 6, 0),
+      },
+    ];
 
-    console.log('running time 1', currentTime);
+    for (const ipfsResultElement of IPFS_Result) {
+      console.log(`processing: ${ipfsResultElement.destinationAddress}`);
+      if (
+        ipfsResultElement.scheduleTime.diffNow() > Duration.fromMillis(100) &&
+        ipfsResultElement.scheduleTime.diffNow() < Duration.fromMillis(10000)
+      ) {
+        console.log(`sending: ${ipfsResultElement.destinationAddress}`);
 
-    if (
-      scheduleTime.diffNow() > Duration.fromMillis(100) &&
-      scheduleTime.diffNow() < Duration.fromMillis(10000)
-    ) {
-      console.log('running time 2', currentTime);
-      const destinationAddress = '0xa3486e350263fa452c43e31aa85939E3CDa3d552';
-      const amount = '0.008';
-
-      const responseTX = await this.sendTransaction(destinationAddress, amount);
-      const message = `You were paid with ${amount} ETH. Check Tx Status at: https://relay.gelato.digital/tasks/status/${responseTX.taskId}`;
-
-      console.log(responseTX);
-      await this.sendXMTPMessage(destinationAddress, message);
-
-      console.log('running time 3', currentTime);
+        const responseTX = await this.sendTransaction(
+          ipfsResultElement.destinationAddress,
+          ipfsResultElement.amount,
+        );
+        const message = `You were paid with ${ipfsResultElement.amount} ETH. Check Tx Status at: https://relay.gelato.digital/tasks/status/${responseTX.taskId}`;
+        await this.sendXMTPMessage(
+          ipfsResultElement.destinationAddress,
+          message,
+        );
+      }
     }
   }
 
