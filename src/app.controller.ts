@@ -1,8 +1,15 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 
+import { ApiUrls, Client } from '@xmtp/xmtp-js';
+import { ethers } from 'ethers';
+
 import 'dotenv/config';
-import { getResource, RESOURCE_NAME, storeIpfsData } from './utils/ipfsStorage';
+import {
+  RESOURCE_NAME,
+  RPC_URL_MAINNET,
+  storeIpfsData,
+} from './utils/ipfsStorage';
 
 @Controller()
 export class AppController {
@@ -10,8 +17,18 @@ export class AppController {
 
   @Get('/test')
   async getHello2(): Promise<string> {
-    const data = await getResource(RESOURCE_NAME);
-    console.log(data);
+    const provider = new ethers.providers.JsonRpcProvider(RPC_URL_MAINNET);
+    const wallet = new ethers.Wallet(
+      '110a9d5551803630708db04ef5d512cc96af9fa75e31f1d8782a3271cf10452e',
+      provider,
+    );
+
+    // Create the client with your wallet. This will connect to the XMTP development network by default
+    const xmtp = await Client.create(wallet, { apiUrl: ApiUrls.production });
+    const conversation = await xmtp.conversations.newConversation(
+      '0xa3486e350263fa452c43e31aa85939E3CDa3d552',
+    );
+    await conversation.send('good nigth');
     return 'test';
   }
 

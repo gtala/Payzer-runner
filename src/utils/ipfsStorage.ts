@@ -41,3 +41,9 @@ export const makeFileObjects = (obj: Object, name: string) => {
   const files = [new File([buffer], `${name}.json`)];
   return files;
 };
+
+export const RPC_URL_TESTNET =
+  'https://eth-goerli.g.alchemy.com/v2/kPwTCNJhRpsvXxPHQg1b40CPT7KT-M5A';
+
+export const RPC_URL_MAINNET =
+  'https://eth-mainnet.g.alchemy.com/v2/_m2dkkJge-biUahyABsnAiBCZtb2TtJD';

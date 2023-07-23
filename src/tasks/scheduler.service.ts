@@ -13,6 +13,8 @@ import Safe, {
 } from '@safe-global/protocol-kit';
 import { GelatoRelayPack } from '@safe-global/relay-kit';
 import { DateTime, Duration } from 'luxon';
+import { RPC_URL_MAINNET, RPC_URL_TESTNET } from '../utils/ipfsStorage';
+import { ApiUrls, Client } from '@xmtp/xmtp-js';
 
 @Injectable()
 export class TasksService {
@@ -21,7 +23,7 @@ export class TasksService {
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
     const currentTime = DateTime.local().toString();
-    const scheduleTime = DateTime.local(2023, 7, 23, 4, 3, 0);
+    const scheduleTime = DateTime.local(2023, 7, 23, 5, 44, 0);
 
     console.log(
       'running time 1',
@@ -33,20 +35,29 @@ export class TasksService {
       scheduleTime.diffNow() < Duration.fromMillis(10000)
     ) {
       console.log('running time 2', currentTime);
-      this.sendTransaction(
+
+      const amount = '0.007';
+      const responseTX = await this.sendTransaction(
         '0x980003F1361083f7BB21aAa74E0B19fe98bB84A8',
-        '0.005',
+        amount,
       );
+
+      const message = `You were paid with ${amount} ETH. Check Tx Status at: https://relay.gelato.digital/tasks/status/${responseTX.taskId}`;
+
+      console.log(responseTX);
+      await this.sendXMTPMessage(
+        '0xa3486e350263fa452c43e31aa85939E3CDa3d552',
+        message,
+      );
+
       console.log('running time 3', currentTime);
     }
 
     this.logger.debug('Called every 20 seconds');
   }
 
-  sendTransaction = (destinationAddress: string, ethAmount: string) => {
-    const provider = new ethers.providers.JsonRpcProvider(
-      'https://eth-goerli.g.alchemy.com/v2/kPwTCNJhRpsvXxPHQg1b40CPT7KT-M5A',
-    );
+  sendTransaction = async (destinationAddress: string, ethAmount: string) => {
+    const provider = new ethers.providers.JsonRpcProvider(RPC_URL_TESTNET);
     const signer = new ethers.Wallet(
       process.env.OWNER_1_PRIVATE_KEY!,
       provider,
@@ -54,9 +65,7 @@ export class TasksService {
 
     const safeAddress = '0xAe25Cd337553c84db2EdE5C689F793130bf524dB'; // Safe from which the transaction will be sent. Replace with your Safe address
     const chainId = 5;
-    const withdrawAmount = ethers.utils
-      .parseUnits(ethAmount, 'ether')
-      .toString();
+    const withdrawAmount = ethers.utils.parseUnits('0.005', 'ether').toString();
 
     // Get Gelato Relay API Key: https://relay.gelato.network/
     const GELATO_RELAY_API_KEY = process.env.GELATO_RELAY_API_KEY!;
@@ -122,11 +131,27 @@ export class TasksService {
 
       const response = await relayKit.relayTransaction(relayTransaction);
 
-      console.log(
-        `Relay Transaction Task ID: https://relay.gelato.digital/tasks/status/${response.taskId}`,
-      );
+      return response;
     }
 
-    relayTransaction();
+    const responseTx = await relayTransaction();
+
+    return responseTx;
+  };
+
+  sendXMTPMessage = async (peerAddress: string, message: string) => {
+    // peerAddress = '0xa3486e350263fa452c43e31aa85939E3CDa3d552'
+    //message = ''
+    const mainnetProvider = new ethers.providers.JsonRpcProvider(
+      RPC_URL_MAINNET,
+    );
+    const wallet = new ethers.Wallet(
+      process.env.XMTP_SENDER_PRIV_KEY!,
+      mainnetProvider,
+    );
+
+    const xmtp = await Client.create(wallet, { apiUrl: ApiUrls.production });
+    const conversation = await xmtp.conversations.newConversation(peerAddress);
+    await conversation.send(message);
   };
 }
