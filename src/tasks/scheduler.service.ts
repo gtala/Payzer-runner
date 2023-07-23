@@ -23,37 +23,26 @@ export class TasksService {
   @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
     const currentTime = DateTime.local().toString();
-    const scheduleTime = DateTime.local(2023, 7, 23, 5, 44, 0);
+    const scheduleTime = DateTime.local(2023, 7, 23, 5, 51, 0);
 
-    console.log(
-      'running time 1',
-      currentTime,
-      scheduleTime.diffNow().toString(),
-    );
+    console.log('running time 1', currentTime);
+
     if (
       scheduleTime.diffNow() > Duration.fromMillis(100) &&
       scheduleTime.diffNow() < Duration.fromMillis(10000)
     ) {
       console.log('running time 2', currentTime);
+      const destinationAddress = '0xa3486e350263fa452c43e31aa85939E3CDa3d552';
+      const amount = '0.008';
 
-      const amount = '0.007';
-      const responseTX = await this.sendTransaction(
-        '0x980003F1361083f7BB21aAa74E0B19fe98bB84A8',
-        amount,
-      );
-
+      const responseTX = await this.sendTransaction(destinationAddress, amount);
       const message = `You were paid with ${amount} ETH. Check Tx Status at: https://relay.gelato.digital/tasks/status/${responseTX.taskId}`;
 
       console.log(responseTX);
-      await this.sendXMTPMessage(
-        '0xa3486e350263fa452c43e31aa85939E3CDa3d552',
-        message,
-      );
+      await this.sendXMTPMessage(destinationAddress, message);
 
       console.log('running time 3', currentTime);
     }
-
-    this.logger.debug('Called every 20 seconds');
   }
 
   sendTransaction = async (destinationAddress: string, ethAmount: string) => {
@@ -65,7 +54,9 @@ export class TasksService {
 
     const safeAddress = '0xAe25Cd337553c84db2EdE5C689F793130bf524dB'; // Safe from which the transaction will be sent. Replace with your Safe address
     const chainId = 5;
-    const withdrawAmount = ethers.utils.parseUnits('0.005', 'ether').toString();
+    const withdrawAmount = ethers.utils
+      .parseUnits(ethAmount, 'ether')
+      .toString();
 
     // Get Gelato Relay API Key: https://relay.gelato.network/
     const GELATO_RELAY_API_KEY = process.env.GELATO_RELAY_API_KEY!;
@@ -129,9 +120,7 @@ export class TasksService {
         options,
       };
 
-      const response = await relayKit.relayTransaction(relayTransaction);
-
-      return response;
+      return await relayKit.relayTransaction(relayTransaction);
     }
 
     const responseTx = await relayTransaction();
@@ -140,8 +129,6 @@ export class TasksService {
   };
 
   sendXMTPMessage = async (peerAddress: string, message: string) => {
-    // peerAddress = '0xa3486e350263fa452c43e31aa85939E3CDa3d552'
-    //message = ''
     const mainnetProvider = new ethers.providers.JsonRpcProvider(
       RPC_URL_MAINNET,
     );
